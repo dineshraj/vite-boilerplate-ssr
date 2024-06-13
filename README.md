@@ -1,0 +1,6 @@
+# VITE REACT BOILERTPLATE
+
+## Features
+* SSR
+* SCSS
+* CSS Modules
