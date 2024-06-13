@@ -1,13 +1,22 @@
-import './index.css'
-import React from 'react'
-import ReactDOMServer from 'react-dom/server'
-import App from './App'
+// import React from 'react'
+import fs from 'fs';
+import path from 'path';
+import { renderToString } from 'react-dom/server';
+import { StaticRouter } from 'react-router-dom/server';
+import App from './App';
 
-export function render() {
-  const html = ReactDOMServer.renderToString(
-    <React.StrictMode>
+export function render(url: string) {
+  const html = renderToString(
+    <StaticRouter location={url}>
       <App />
-    </React.StrictMode>
-  )
-  return { html }
+    </StaticRouter>
+  );
+
+  const __dirname = import.meta.dirname;
+  const cssFiles = fs.readdirSync(path.resolve(__dirname, 'styles'))
+    .filter(file => file.endsWith('.scss'))
+    .map(file => path.resolve(__dirname, 'styles', file));
+  const css = cssFiles.map(file => fs.readFileSync(file, 'utf8')).join('\n');
+
+  return { html, css }
 }
