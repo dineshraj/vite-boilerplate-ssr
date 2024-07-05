@@ -41,11 +41,12 @@ app.use('*', async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, '');
 
-    let template;
+    let template: string;
     let render;
     if (!isProduction) {
       // Always read fresh template in development
       template = await fs.readFile('./index.html', 'utf-8');
+      template.replace('<!--app-css-->', '<link rel="stylesheet" href="./src/index.css" />');
       template = await vite.transformIndexHtml(url, template);
       render = (await vite.ssrLoadModule('./src/entry-server.tsx')).render;
     } else {
@@ -54,22 +55,18 @@ app.use('*', async (req, res) => {
     }
     
     const rendered = await render(url, ssrManifest);
-    console.log("🚀 ~ app.use ~ render:", rendered);
-    const html = template
-      .replace(`<!--app-css-->`, rendered.css ?? '')
-      .replace(`<!--app-head-->`, rendered.head ?? '')
-      .replace(`<!--app-html-->`, rendered.html ?? '');
+    const html = 
+      template.replace(`<!--app-html-->`, rendered.html ?? '');
 
     res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
   } catch (e) {
-    let error;
+    let error: Error;
     if (e instanceof Error) {
       error = e;
+      vite?.ssrFixStacktrace(error);
+      console.log(error.stack);
+      res.status(500).end(error.stack);
     }
-
-    vite?.ssrFixStacktrace(error);
-    console.log(error.stack);
-    res.status(500).end(error.stack);
   }
 });
 
